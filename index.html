@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stammtisch-Team-Auslosung</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <h1>Stammtisch-Team-Auslosung</h1>
+
+  <section id="setup" class="screen">
+    <p class="hint">Trage genau 15 Namen ein, einen pro Zeile.</p>
+    <textarea id="names-input" rows="15" placeholder="Name 1
+Name 2
+Name 3
+..."></textarea>
+    <p id="setup-error" class="error" role="alert"></p>
+    <button id="draw-btn" class="btn-primary">Teams auslosen</button>
+  </section>
+
+  <section id="reveal" class="screen hidden">
+    <p class="progress"></p>
+    <div id="reveal-card" class="card"></div>
+    <button id="next-btn" class="btn-primary">Weiter</button>
+  </section>
+
+  <section id="summary" class="screen hidden">
+    <h2>Alle Teams</h2>
+    <ol id="summary-list" class="summary-list"></ol>
+    <button id="restart-btn" class="btn-secondary">Neu auslosen</button>
+  </section>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
