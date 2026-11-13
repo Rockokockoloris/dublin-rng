@@ -77,7 +77,7 @@ function renderStep() {
   const step = steps[stepIndex];
   progressEl.textContent = `Team ${stepIndex + 1} von ${steps.length}`;
   revealCard.innerHTML = `
-    <div class="label">${step.type === "trio" ? "Dreier-Team" : "Zweier-Team"}</div>
+    <div class="label">${step.type === "trio" ? "🐕 Dreier-Team" : "🐾 Zweier-Team"}</div>
     <div class="members">${step.members.join(" & ")}</div>
     <div class="detail">${step.detail}</div>
   `;

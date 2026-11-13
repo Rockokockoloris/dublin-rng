@@ -1,3 +1,16 @@
+:root {
+  /* Farben angelehnt an die bunten Georgian Doors von Dublin + Guinness-Töne */
+  --door-green: #145a32;
+  --door-blue: #1f4e8c;
+  --door-red: #a8322d;
+  --door-yellow: #d4a017;
+  --door-teal: #0e7c7b;
+  --door-purple: #6b3fa0;
+  --guinness-cream: #f3e9d2;
+  --guinness-black: #1b1b1b;
+  --paw-brown: #7a5230;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -5,8 +18,14 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  background: #f4f3f0;
-  color: #222;
+  background-color: var(--guinness-cream);
+  background-image:
+    radial-gradient(circle at 10px 10px, rgba(122, 82, 48, 0.18) 2px, transparent 2.5px),
+    radial-gradient(circle at 16px 4px, rgba(122, 82, 48, 0.18) 1.4px, transparent 2px),
+    radial-gradient(circle at 20px 10px, rgba(122, 82, 48, 0.18) 1.4px, transparent 2px),
+    radial-gradient(circle at 14px 16px, rgba(122, 82, 48, 0.18) 1.4px, transparent 2px);
+  background-size: 70px 70px;
+  color: var(--guinness-black);
 }
 
 .app {
@@ -15,10 +34,22 @@ body {
   padding: 1.5rem 1.25rem 3rem;
 }
 
-h1 {
-  font-size: 1.4rem;
+.app-header {
   text-align: center;
   margin-bottom: 1.5rem;
+}
+
+h1 {
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 1.4rem;
+  color: var(--door-green);
+  margin: 0 0 0.35rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--paw-brown);
+  font-size: 0.9rem;
 }
 
 .screen.hidden {
@@ -34,23 +65,27 @@ textarea {
   width: 100%;
   font-size: 1rem;
   padding: 0.75rem;
-  border: 1px solid #ccc;
+  border: 2px solid var(--door-green);
   border-radius: 8px;
+  background: white;
   resize: vertical;
 }
 
 .error {
-  color: #b00020;
+  color: var(--door-red);
   min-height: 1.2em;
   margin: 0.5rem 0;
   font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .btn-primary, .btn-secondary {
   display: block;
   width: 100%;
   padding: 0.9rem;
+  font-family: "Baloo 2", system-ui, sans-serif;
   font-size: 1.1rem;
+  font-weight: 700;
   border-radius: 10px;
   border: none;
   margin-top: 0.75rem;
@@ -58,26 +93,27 @@ textarea {
 }
 
 .btn-primary {
-  background: #2d6a4f;
-  color: white;
+  background: var(--door-green);
+  color: var(--guinness-cream);
 }
 
 .btn-primary:active {
-  background: #1b4332;
+  background: #0d3b21;
 }
 
 .btn-secondary {
-  background: #e0e0e0;
-  color: #222;
+  background: var(--guinness-black);
+  color: var(--guinness-cream);
 }
 
 .btn-secondary:active {
-  background: #cfcfcf;
+  background: #000;
 }
 
 .progress {
   text-align: center;
-  color: #666;
+  color: var(--paw-brown);
+  font-weight: 600;
   margin-bottom: 0.5rem;
 }
 
@@ -85,7 +121,8 @@ textarea {
   background: white;
   border-radius: 12px;
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 3px solid var(--door-blue);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
   text-align: center;
   min-height: 140px;
   display: flex;
@@ -98,13 +135,14 @@ textarea {
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #2d6a4f;
+  color: var(--door-green);
   font-weight: 600;
 }
 
 .card .members {
+  font-family: "Baloo 2", system-ui, sans-serif;
   font-size: 1.3rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .card .detail {
@@ -124,11 +162,25 @@ textarea {
   background: white;
   border-radius: 10px;
   padding: 0.85rem 1rem;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  border-left: 8px solid var(--door-green);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.summary-list li:nth-child(6n+1) { border-left-color: var(--door-green); }
+.summary-list li:nth-child(6n+2) { border-left-color: var(--door-blue); }
+.summary-list li:nth-child(6n+3) { border-left-color: var(--door-red); }
+.summary-list li:nth-child(6n+4) { border-left-color: var(--door-yellow); }
+.summary-list li:nth-child(6n+5) { border-left-color: var(--door-teal); }
+.summary-list li:nth-child(6n+6) { border-left-color: var(--door-purple); }
+
+.summary-list li:last-child {
+  border-left-color: var(--guinness-black);
+  background: #fffaf0;
 }
 
 .summary-list .s-members {
-  font-weight: 600;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-weight: 700;
 }
 
 .summary-list .s-detail {
