@@ -1,9 +1,13 @@
 const PRESET_NAMES = ["Jannik", "Jan", "Christoph", "Lütti", "Marvin", "Nico", "Marius", "Carsten", "Robin", "Phil", "Julius", "Tim", "Lars", "David", "Steak"];
 const MONTH_PAIRS = ["Januar / Februar", "März / April", "Mai / Juni", "Juli / August", "September / Oktober", "November / Dezember"];
 
+const welcomeScreen = document.getElementById("welcome");
 const setupScreen = document.getElementById("setup");
 const revealScreen = document.getElementById("reveal");
 const summaryScreen = document.getElementById("summary");
+
+const modeAuslosungBtn = document.getElementById("mode-auslosung-btn");
+const modeChallengesBtn = document.getElementById("mode-challenges-btn");
 
 const nameCardsEl = document.getElementById("name-cards");
 const presentCountEl = document.getElementById("present-count");
@@ -13,11 +17,13 @@ const progressEl = document.querySelector(".progress");
 const revealCard = document.getElementById("reveal-card");
 const challengeCard = document.getElementById("challenge-card");
 const nextBtn = document.getElementById("next-btn");
+const endChallengesBtn = document.getElementById("end-challenges-btn");
 
 const summaryList = document.getElementById("summary-list");
 const restartBtn = document.getElementById("restart-btn");
 const appHeader = document.querySelector(".app-header");
 
+let appMode = "auslosung";
 let steps = [];
 let stepIndex = 0;
 const presentNames = new Set();
@@ -57,6 +63,18 @@ nameCardsEl.addEventListener("click", (event) => {
   updatePresentCount();
 });
 
+modeAuslosungBtn.addEventListener("click", () => {
+  appMode = "auslosung";
+  drawBtn.textContent = "Teams auslosen";
+  showScreen(setupScreen);
+});
+
+modeChallengesBtn.addEventListener("click", () => {
+  appMode = "challenges";
+  drawBtn.textContent = "Challenge starten";
+  showScreen(setupScreen);
+});
+
 function buildSteps(names) {
   const shuffled = shuffle(names);
   const teamSteps = [];
@@ -82,7 +100,7 @@ function buildSteps(names) {
     if (!isLast) {
       const players = pickChallengePlayers();
       if (players) {
-        const game = CHALLENGE_GAMES[Math.floor(Math.random() * CHALLENGE_GAMES.length)];
+        const game = pickWeightedGame();
         result.push({ type: "challenge", game, players });
       }
     }
@@ -91,9 +109,38 @@ function buildSteps(names) {
 }
 
 function showScreen(screen) {
-  for (const s of [setupScreen, revealScreen, summaryScreen]) {
+  for (const s of [welcomeScreen, setupScreen, revealScreen, summaryScreen]) {
     s.classList.toggle("hidden", s !== screen);
   }
+}
+
+function enterChallengeScreen(step) {
+  progressEl.textContent = "🎲 Challenge";
+  revealScreen.classList.add("challenge-active");
+  appHeader.classList.add("hidden");
+  revealCard.classList.add("hidden");
+  challengeCard.classList.remove("hidden");
+  nextBtn.classList.add("hidden");
+  endChallengesBtn.classList.add("hidden");
+  renderChallengeIntro(step);
+}
+
+function revealNextButton() {
+  nextBtn.classList.remove("hidden");
+  if (appMode === "challenges") {
+    endChallengesBtn.classList.remove("hidden");
+  }
+}
+
+function startNextStandaloneChallenge() {
+  const players = pickChallengePlayers();
+  if (!players) {
+    showScreen(welcomeScreen);
+    return;
+  }
+  const game = pickWeightedGame();
+  nextBtn.textContent = "Weiter";
+  enterChallengeScreen({ type: "challenge", game, players });
 }
 
 function renderStep() {
@@ -101,13 +148,7 @@ function renderStep() {
   nextBtn.textContent = "Weiter";
 
   if (step.type === "challenge") {
-    progressEl.textContent = "🎲 Challenge";
-    revealScreen.classList.add("challenge-active");
-    appHeader.classList.add("hidden");
-    revealCard.classList.add("hidden");
-    challengeCard.classList.remove("hidden");
-    nextBtn.classList.add("hidden");
-    renderChallengeIntro(step);
+    enterChallengeScreen(step);
     return;
   }
 
@@ -137,13 +178,22 @@ function renderSummary() {
 }
 
 drawBtn.addEventListener("click", () => {
+  resetChallengeWeights();
+  showScreen(revealScreen);
+  if (appMode === "challenges") {
+    startNextStandaloneChallenge();
+    return;
+  }
   steps = buildSteps(PRESET_NAMES);
   stepIndex = 0;
-  showScreen(revealScreen);
   renderStep();
 });
 
 nextBtn.addEventListener("click", () => {
+  if (appMode === "challenges") {
+    startNextStandaloneChallenge();
+    return;
+  }
   stepIndex++;
   if (stepIndex >= steps.length) {
     renderSummary();
@@ -153,10 +203,16 @@ nextBtn.addEventListener("click", () => {
   }
 });
 
+endChallengesBtn.addEventListener("click", () => {
+  presentNames.clear();
+  renderNameCards();
+  showScreen(welcomeScreen);
+});
+
 restartBtn.addEventListener("click", () => {
   presentNames.clear();
   renderNameCards();
-  showScreen(setupScreen);
+  showScreen(welcomeScreen);
 });
 
 renderNameCards();

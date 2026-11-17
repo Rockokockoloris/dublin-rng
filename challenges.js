@@ -14,6 +14,37 @@ function pickChallengePlayers() {
   return [pool[0], pool[1]];
 }
 
+let challengeWeights = {};
+resetChallengeWeights();
+
+function resetChallengeWeights() {
+  challengeWeights = {};
+  CHALLENGE_GAMES.forEach(g => {
+    challengeWeights[g] = 1;
+  });
+}
+
+function pickWeightedGame() {
+  const totalWeight = CHALLENGE_GAMES.reduce((sum, g) => sum + challengeWeights[g], 0);
+  let r = Math.random() * totalWeight;
+  let chosen = CHALLENGE_GAMES[CHALLENGE_GAMES.length - 1];
+  for (const g of CHALLENGE_GAMES) {
+    r -= challengeWeights[g];
+    if (r <= 0) {
+      chosen = g;
+      break;
+    }
+  }
+
+  CHALLENGE_GAMES.forEach(g => {
+    challengeWeights[g] = g === chosen
+      ? challengeWeights[g] * 0.25
+      : challengeWeights[g] + (1 - challengeWeights[g]) * 0.5;
+  });
+
+  return chosen;
+}
+
 function renderChallengeIntro(step) {
   challengeCard.classList.add("intro-mode");
   const playersLine = step.game === "hotpotato"
@@ -83,7 +114,7 @@ function renderReactionGame(players) {
     statusEl.textContent = falseStart
       ? `${players[1 - winnerIndex]} war zu früh! ${players[winnerIndex]} gewinnt. 🏆`
       : `${players[winnerIndex]} gewinnt! 🏆`;
-    nextBtn.classList.remove("hidden");
+    revealNextButton();
   }
 
   zones.forEach((zone, index) => {
@@ -140,13 +171,13 @@ function renderTicTacToe(players) {
       if (winner !== null) {
         finished = true;
         statusEl.textContent = `${players[winner]} gewinnt! 🏆`;
-        nextBtn.classList.remove("hidden");
+        revealNextButton();
         return;
       }
       if (board.every(v => v !== null)) {
         finished = true;
         statusEl.textContent = "Unentschieden! 🤝";
-        nextBtn.classList.remove("hidden");
+        revealNextButton();
         return;
       }
       currentPlayer = 1 - currentPlayer;
@@ -228,7 +259,7 @@ function renderTapSprint(players) {
       zones[winner].classList.add("winner");
       statusEl.textContent = `${players[winner]} gewinnt! ${counts[0]}:${counts[1]} 🏆`;
     }
-    nextBtn.classList.remove("hidden");
+    revealNextButton();
   }
 }
 
@@ -275,7 +306,7 @@ function renderPerfectFive(players) {
 
     if (taps[0] === null && taps[1] === null) {
       statusEl.textContent = "Keiner hat getippt! Unentschieden 🤝";
-      nextBtn.classList.remove("hidden");
+      revealNextButton();
       return;
     }
 
@@ -289,7 +320,7 @@ function renderPerfectFive(players) {
       zones[winner].classList.add("winner");
       statusEl.textContent = `${players[0]}: ${label(0)} · ${players[1]}: ${label(1)} – ${players[winner]} gewinnt! 🏆`;
     }
-    nextBtn.classList.remove("hidden");
+    revealNextButton();
   }
 }
 
@@ -317,6 +348,6 @@ function renderHotPotato() {
     }
     statusEl.textContent = "Verloren!";
     statusEl.classList.add("status-lost");
-    nextBtn.classList.remove("hidden");
+    revealNextButton();
   }, totalTime);
 }

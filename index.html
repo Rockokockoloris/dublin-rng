@@ -17,7 +17,13 @@
     <p class="subtitle">Wer Gassi geht mit wem, von Jan/Feb bis Nov/Dez</p>
   </header>
 
-  <section id="setup" class="screen">
+  <section id="welcome" class="screen">
+    <p class="hint">Was möchtet ihr spielen?</p>
+    <button id="mode-auslosung-btn" class="btn-primary"><span class="btn-icon">🎲</span><span>Auslosung</span></button>
+    <button id="mode-challenges-btn" class="btn-secondary">🔥 Nur Challenges</button>
+  </section>
+
+  <section id="setup" class="screen hidden">
     <p class="hint">Wer ist heute dabei? Antippen zum An-/Abmelden.</p>
     <div id="name-cards" class="name-cards"></div>
     <p id="present-count" class="present-count"></p>
@@ -29,6 +35,7 @@
     <div id="reveal-card" class="card"></div>
     <div id="challenge-card" class="card challenge-card hidden"></div>
     <button id="next-btn" class="btn-primary">Weiter</button>
+    <button id="end-challenges-btn" class="btn-secondary hidden">Fertig – zurück zum Start</button>
   </section>
 
   <section id="summary" class="screen hidden">

@@ -33,6 +33,19 @@ body {
   max-width: 480px;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 3rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#welcome {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+#mode-challenges-btn {
+  margin-top: auto;
 }
 
 .app-header {
@@ -135,6 +148,15 @@ h1 {
 
 .btn-primary:active {
   background: #0d3b21;
+}
+
+#mode-auslosung-btn {
+  padding: 1.4rem;
+  font-size: 1.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
 }
 
 .btn-secondary {
