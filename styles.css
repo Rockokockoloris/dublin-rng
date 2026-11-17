@@ -72,30 +72,47 @@ h1 {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.7);
 }
 
-textarea {
-  width: 100%;
-  font-size: 1rem;
-  padding: 0.75rem;
-  border: 2px solid var(--door-green);
-  border-radius: 8px;
-  background: white;
-  resize: vertical;
+.name-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
 }
 
-.error {
-  display: inline-block;
-  color: var(--door-red);
-  min-height: 1.2em;
-  margin: 0.5rem 0;
-  padding: 0 0.1rem;
+.name-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--door-blue);
+  border-radius: 10px;
+  padding: 0.7rem 0.3rem;
+  font-family: "Baloo 2", system-ui, sans-serif;
   font-size: 0.95rem;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 4px;
+  font-weight: 600;
+  color: var(--guinness-black);
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.error:empty {
-  background: none;
+.name-card:active {
+  transform: scale(0.96);
+}
+
+.name-card.selected {
+  background: var(--door-green);
+  border-color: var(--door-green);
+  color: var(--guinness-cream);
+}
+
+.name-card.selected::after {
+  content: " ✓";
+}
+
+.present-count {
+  text-align: center;
+  margin: 0 0 1rem;
+  color: var(--guinness-cream);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.7);
+  font-size: 0.9rem;
 }
 
 .btn-primary, .btn-secondary {

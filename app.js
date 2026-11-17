@@ -1,11 +1,12 @@
+const PRESET_NAMES = ["Jannik", "Jan", "Christoph", "Lütti", "Marvin", "Nico", "Marius", "Carsten", "Robin", "Phil", "Julius", "Tim", "Lars", "David", "Steak"];
 const MONTH_PAIRS = ["Januar / Februar", "März / April", "Mai / Juni", "Juli / August", "September / Oktober", "November / Dezember"];
 
 const setupScreen = document.getElementById("setup");
 const revealScreen = document.getElementById("reveal");
 const summaryScreen = document.getElementById("summary");
 
-const namesInput = document.getElementById("names-input");
-const setupError = document.getElementById("setup-error");
+const nameCardsEl = document.getElementById("name-cards");
+const presentCountEl = document.getElementById("present-count");
 const drawBtn = document.getElementById("draw-btn");
 
 const progressEl = document.querySelector(".progress");
@@ -17,6 +18,7 @@ const restartBtn = document.getElementById("restart-btn");
 
 let steps = [];
 let stepIndex = 0;
+const presentNames = new Set();
 
 function shuffle(array) {
   const result = array.slice();
@@ -27,27 +29,31 @@ function shuffle(array) {
   return result;
 }
 
-function parseNames(raw) {
-  return raw
-    .split("\n")
-    .map(n => n.trim())
-    .filter(n => n.length > 0);
+function renderNameCards() {
+  nameCardsEl.innerHTML = PRESET_NAMES.map(name => `
+    <button type="button" class="name-card" data-name="${name}" aria-pressed="false">${name}</button>
+  `).join("");
+  updatePresentCount();
 }
 
-function validateNames(names) {
-  if (names.length !== 15) {
-    return `Es müssen genau 15 Namen sein (aktuell: ${names.length}).`;
-  }
-  const seen = new Set();
-  for (const name of names) {
-    const key = name.toLowerCase();
-    if (seen.has(key)) {
-      return `Der Name "${name}" kommt doppelt vor.`;
-    }
-    seen.add(key);
-  }
-  return null;
+function updatePresentCount() {
+  presentCountEl.textContent = `${presentNames.size} von ${PRESET_NAMES.length} anwesend`;
 }
+
+nameCardsEl.addEventListener("click", (event) => {
+  const card = event.target.closest(".name-card");
+  if (!card) return;
+  const name = card.dataset.name;
+  const isSelected = presentNames.has(name);
+  if (isSelected) {
+    presentNames.delete(name);
+  } else {
+    presentNames.add(name);
+  }
+  card.classList.toggle("selected", !isSelected);
+  card.setAttribute("aria-pressed", String(!isSelected));
+  updatePresentCount();
+});
 
 function buildSteps(names) {
   const shuffled = shuffle(names);
@@ -94,14 +100,7 @@ function renderSummary() {
 }
 
 drawBtn.addEventListener("click", () => {
-  const names = parseNames(namesInput.value);
-  const error = validateNames(names);
-  if (error) {
-    setupError.textContent = error;
-    return;
-  }
-  setupError.textContent = "";
-  steps = buildSteps(names);
+  steps = buildSteps(PRESET_NAMES);
   stepIndex = 0;
   showScreen(revealScreen);
   renderStep();
@@ -118,7 +117,9 @@ nextBtn.addEventListener("click", () => {
 });
 
 restartBtn.addEventListener("click", () => {
-  namesInput.value = "";
-  setupError.textContent = "";
+  presentNames.clear();
+  renderNameCards();
   showScreen(setupScreen);
 });
+
+renderNameCards();
