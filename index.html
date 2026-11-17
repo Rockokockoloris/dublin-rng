@@ -27,17 +27,20 @@
     <button id="mode-challenges-btn" class="btn-secondary">🔥 Nur Challenges</button>
   </section>
 
-  <section id="setup" class="screen hidden">
+  <section id="setup-presence" class="screen hidden">
     <p class="hint">Wer ist heute dabei? Antippen zum An-/Abmelden.</p>
     <div id="name-cards" class="name-cards"></div>
     <p id="present-count" class="present-count"></p>
+    <button id="presence-next-btn" class="btn-primary">Weiter</button>
+  </section>
 
-    <div id="trio-exclude-section">
-      <p class="hint">Wer steht nicht für die Organisation der Stammtischfahrt zur Verfügung?</p>
-      <div id="trio-exclude-cards" class="name-cards"></div>
+  <section id="setup-exclude" class="screen hidden">
+    <p class="hint">Wer steht nicht für die Organisation der Stammtischfahrt zur Verfügung?</p>
+    <div id="trio-exclude-cards" class="name-cards"></div>
+    <div class="setup-nav">
+      <button id="exclude-back-btn" class="btn-secondary">Zurück</button>
+      <button id="draw-btn" class="btn-primary">Teams auslosen</button>
     </div>
-
-    <button id="draw-btn" class="btn-primary">Teams auslosen</button>
   </section>
 
   <section id="reveal" class="screen hidden">

@@ -16,7 +16,8 @@ window.addEventListener("popstate", () => {
 });
 
 const welcomeScreen = document.getElementById("welcome");
-const setupScreen = document.getElementById("setup");
+const setupPresenceScreen = document.getElementById("setup-presence");
+const setupExcludeScreen = document.getElementById("setup-exclude");
 const revealScreen = document.getElementById("reveal");
 const summaryScreen = document.getElementById("summary");
 
@@ -25,8 +26,9 @@ const modeChallengesBtn = document.getElementById("mode-challenges-btn");
 
 const nameCardsEl = document.getElementById("name-cards");
 const presentCountEl = document.getElementById("present-count");
-const trioExcludeSection = document.getElementById("trio-exclude-section");
+const presenceNextBtn = document.getElementById("presence-next-btn");
 const trioExcludeCardsEl = document.getElementById("trio-exclude-cards");
+const excludeBackBtn = document.getElementById("exclude-back-btn");
 const drawBtn = document.getElementById("draw-btn");
 
 const progressEl = document.querySelector(".progress");
@@ -42,6 +44,7 @@ const appHeader = document.querySelector(".app-header");
 let appMode = "auslosung";
 let steps = [];
 let stepIndex = 0;
+let currentStandaloneChallenge = null;
 const presentNames = new Set();
 const unavailableForTrip = new Set();
 
@@ -78,6 +81,7 @@ nameCardsEl.addEventListener("click", (event) => {
   card.classList.toggle("selected", !isSelected);
   card.setAttribute("aria-pressed", String(!isSelected));
   updatePresentCount();
+  saveState();
 });
 
 function renderTrioExcludeCards() {
@@ -98,20 +102,37 @@ trioExcludeCardsEl.addEventListener("click", (event) => {
   }
   card.classList.toggle("excluded", !isExcluded);
   card.setAttribute("aria-pressed", String(!isExcluded));
+  saveState();
 });
 
 modeAuslosungBtn.addEventListener("click", () => {
   appMode = "auslosung";
-  drawBtn.textContent = "Teams auslosen";
-  trioExcludeSection.classList.remove("hidden");
-  showScreen(setupScreen);
+  presenceNextBtn.textContent = "Weiter";
+  showScreen(setupPresenceScreen);
+  saveState();
 });
 
 modeChallengesBtn.addEventListener("click", () => {
   appMode = "challenges";
-  drawBtn.textContent = "Challenge starten";
-  trioExcludeSection.classList.add("hidden");
-  showScreen(setupScreen);
+  presenceNextBtn.textContent = "Challenge starten";
+  showScreen(setupPresenceScreen);
+  saveState();
+});
+
+presenceNextBtn.addEventListener("click", () => {
+  if (appMode === "challenges") {
+    resetChallengeWeights();
+    showScreen(revealScreen);
+    startNextStandaloneChallenge();
+    return;
+  }
+  showScreen(setupExcludeScreen);
+  saveState();
+});
+
+excludeBackBtn.addEventListener("click", () => {
+  showScreen(setupPresenceScreen);
+  saveState();
 });
 
 function buildSteps(names) {
@@ -153,9 +174,106 @@ function buildSteps(names) {
   return result;
 }
 
+const ALL_SCREENS = [welcomeScreen, setupPresenceScreen, setupExcludeScreen, revealScreen, summaryScreen];
+
 function showScreen(screen) {
-  for (const s of [welcomeScreen, setupScreen, revealScreen, summaryScreen]) {
+  for (const s of ALL_SCREENS) {
     s.classList.toggle("hidden", s !== screen);
+  }
+}
+
+function getCurrentScreenId() {
+  const current = ALL_SCREENS.find(s => !s.classList.contains("hidden"));
+  return current ? current.id : "welcome";
+}
+
+const STORAGE_KEY = "dieHundisState";
+
+function saveState() {
+  const state = {
+    appMode,
+    presentNames: Array.from(presentNames),
+    unavailableForTrip: Array.from(unavailableForTrip),
+    screen: getCurrentScreenId(),
+    steps,
+    stepIndex,
+    currentStandaloneChallenge
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    // z. B. im privaten Modus nicht verfügbar – App bleibt nutzbar, nur ohne Wiederherstellung.
+  }
+}
+
+function clearState() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    // siehe saveState
+  }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function restoreSelectionCards(container, selector, selectedSet, activeClass) {
+  container.querySelectorAll(selector).forEach(card => {
+    const isActive = selectedSet.has(card.dataset.name);
+    card.classList.toggle(activeClass, isActive);
+    card.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
+function initApp() {
+  renderNameCards();
+  renderTrioExcludeCards();
+
+  const state = loadState();
+  if (!state) return;
+
+  appMode = state.appMode === "challenges" ? "challenges" : "auslosung";
+  steps = Array.isArray(state.steps) ? state.steps : [];
+  stepIndex = Number.isInteger(state.stepIndex) ? state.stepIndex : 0;
+  currentStandaloneChallenge = state.currentStandaloneChallenge || null;
+
+  (state.presentNames || []).forEach(name => presentNames.add(name));
+  (state.unavailableForTrip || []).forEach(name => unavailableForTrip.add(name));
+  restoreSelectionCards(nameCardsEl, ".name-card", presentNames, "selected");
+  restoreSelectionCards(trioExcludeCardsEl, ".exclude-card", unavailableForTrip, "excluded");
+  updatePresentCount();
+  presenceNextBtn.textContent = appMode === "challenges" ? "Challenge starten" : "Weiter";
+
+  const screenMap = {
+    welcome: welcomeScreen,
+    "setup-presence": setupPresenceScreen,
+    "setup-exclude": setupExcludeScreen,
+    reveal: revealScreen,
+    summary: summaryScreen
+  };
+  const targetScreen = screenMap[state.screen] || welcomeScreen;
+  showScreen(targetScreen);
+
+  if (targetScreen === revealScreen) {
+    if (appMode === "challenges" && currentStandaloneChallenge) {
+      enterChallengeScreen(currentStandaloneChallenge);
+    } else if (steps.length > 0) {
+      renderStep();
+    } else {
+      showScreen(welcomeScreen);
+    }
+  } else if (targetScreen === summaryScreen) {
+    if (steps.length > 0) {
+      renderSummary();
+    } else {
+      showScreen(welcomeScreen);
+    }
   }
 }
 
@@ -185,7 +303,9 @@ function startNextStandaloneChallenge() {
   }
   const game = pickWeightedGame();
   nextBtn.textContent = "Weiter";
-  enterChallengeScreen({ type: "challenge", game, players });
+  currentStandaloneChallenge = { type: "challenge", game, players };
+  enterChallengeScreen(currentStandaloneChallenge);
+  saveState();
 }
 
 function renderStep() {
@@ -224,14 +344,11 @@ function renderSummary() {
 
 drawBtn.addEventListener("click", () => {
   resetChallengeWeights();
-  showScreen(revealScreen);
-  if (appMode === "challenges") {
-    startNextStandaloneChallenge();
-    return;
-  }
   steps = buildSteps(PRESET_NAMES);
   stepIndex = 0;
+  showScreen(revealScreen);
   renderStep();
+  saveState();
 });
 
 nextBtn.addEventListener("click", () => {
@@ -246,12 +363,16 @@ nextBtn.addEventListener("click", () => {
   } else {
     renderStep();
   }
+  saveState();
 });
 
 endChallengesBtn.addEventListener("click", () => {
   presentNames.clear();
+  unavailableForTrip.clear();
   renderNameCards();
+  renderTrioExcludeCards();
   showScreen(welcomeScreen);
+  clearState();
 });
 
 restartBtn.addEventListener("click", () => {
@@ -260,7 +381,7 @@ restartBtn.addEventListener("click", () => {
   renderNameCards();
   renderTrioExcludeCards();
   showScreen(welcomeScreen);
+  clearState();
 });
 
-renderNameCards();
-renderTrioExcludeCards();
+document.addEventListener("DOMContentLoaded", initApp);

@@ -142,8 +142,23 @@ h1 {
   content: " 🚫";
 }
 
-#trio-exclude-section {
-  margin-top: 1rem;
+.setup-nav {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.setup-nav .btn-secondary {
+  flex: 0 0 auto;
+  width: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  margin-top: 0;
+}
+
+.setup-nav .btn-primary {
+  flex: 1;
+  margin-top: 0;
 }
 
 .present-count {
