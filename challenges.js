@@ -118,7 +118,7 @@ function renderReactionGame(players) {
   }
 
   zones.forEach((zone, index) => {
-    zone.addEventListener("click", () => {
+    zone.addEventListener("pointerdown", () => {
       if (phase === "done") return;
       if (phase === "waiting") {
         finish(1 - index, true);
@@ -208,7 +208,7 @@ function renderTapSprint(players) {
   let phase = "countdown";
 
   zones.forEach((zone, index) => {
-    zone.addEventListener("click", () => {
+    zone.addEventListener("pointerdown", () => {
       if (phase !== "running") return;
       counts[index]++;
       countEls[index].textContent = counts[index];
@@ -287,7 +287,7 @@ function renderPerfectFive(players) {
   const safetyTimer = setTimeout(finish, 1200 + 15000);
 
   zones.forEach((zone, index) => {
-    zone.addEventListener("click", () => {
+    zone.addEventListener("pointerdown", () => {
       if (finished || taps[index] !== null || startTime === null) return;
       taps[index] = Date.now() - startTime;
       zone.textContent = `${players[index]} ✓`;
