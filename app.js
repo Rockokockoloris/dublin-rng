@@ -1,6 +1,20 @@
 const PRESET_NAMES = ["Jannik", "Jan", "Christoph", "Lütti", "Marvin", "Nico", "Marius", "Carsten", "Robin", "Phil", "Julius", "Tim", "Lars", "David", "Steak"];
 const MONTH_PAIRS = ["Januar / Februar", "März / April", "Mai / Juni", "Juli / August", "September / Oktober", "November / Dezember"];
 
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js");
+  });
+}
+
+// Verhindert, dass ein versehentliches Zurück-Wischen (z. B. beim Herumreichen
+// des Handys bei Hot Potato) den App-Zustand zurücksetzt: jeder Rücksprung
+// wird sofort durch einen neuen Verlaufseintrag "abgefangen".
+history.pushState(null, "", location.href);
+window.addEventListener("popstate", () => {
+  history.pushState(null, "", location.href);
+});
+
 const welcomeScreen = document.getElementById("welcome");
 const setupScreen = document.getElementById("setup");
 const revealScreen = document.getElementById("reveal");
