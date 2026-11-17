@@ -1,9 +1,11 @@
-const CHALLENGE_GAMES = ["reaction", "tictactoe", "tapsprint"];
+const CHALLENGE_GAMES = ["reaction", "tictactoe", "tapsprint", "perfectfive", "hotpotato"];
 
 const GAME_NAMES = {
   reaction: "🐾 Reaktionsduell",
   tictactoe: "🐾 Tic-Tac-Toe",
-  tapsprint: "🐾 Tap-Sprint"
+  tapsprint: "🐾 Tap-Sprint",
+  perfectfive: "🐾 Perfekte 5 Sekunden",
+  hotpotato: "🐾 Hot Potato"
 };
 
 function pickChallengePlayers() {
@@ -14,6 +16,9 @@ function pickChallengePlayers() {
 
 function renderChallengeIntro(step) {
   challengeCard.classList.add("intro-mode");
+  const playersLine = step.game === "hotpotato"
+    ? "Alle Anwesenden"
+    : step.players.join(" 🆚 ");
   challengeCard.innerHTML = `
     <div class="challenge-intro">
       <div class="intro-dog">
@@ -25,7 +30,7 @@ function renderChallengeIntro(step) {
       <div class="intro-bark">WUFF!</div>
       <div class="intro-title">CHALLENGE!</div>
       <div class="intro-game-name">${GAME_NAMES[step.game]}</div>
-      <div class="intro-players">${step.players.join(" 🆚 ")}</div>
+      <div class="intro-players">${playersLine}</div>
       <div class="intro-hint">Antippen zum Start</div>
     </div>
   `;
@@ -41,13 +46,14 @@ function renderChallengeIntro(step) {
 }
 
 function renderChallenge(step) {
-  if (step.game === "reaction") {
-    renderReactionGame(step.players);
-  } else if (step.game === "tictactoe") {
-    renderTicTacToe(step.players);
-  } else {
-    renderTapSprint(step.players);
-  }
+  const renderers = {
+    reaction: renderReactionGame,
+    tictactoe: renderTicTacToe,
+    tapsprint: renderTapSprint,
+    perfectfive: renderPerfectFive,
+    hotpotato: renderHotPotato
+  };
+  renderers[step.game](step.players);
 }
 
 function renderReactionGame(players) {
@@ -224,4 +230,93 @@ function renderTapSprint(players) {
     }
     nextBtn.classList.remove("hidden");
   }
+}
+
+function renderPerfectFive(players) {
+  challengeCard.innerHTML = `
+    <p class="challenge-status" id="five-status">Bereit machen …</p>
+    <div class="reaction-zones">
+      <button type="button" class="reaction-zone five-zone" data-index="0" disabled>${players[0]}</button>
+      <button type="button" class="reaction-zone five-zone" data-index="1" disabled>${players[1]}</button>
+    </div>
+  `;
+
+  const statusEl = document.getElementById("five-status");
+  const zones = challengeCard.querySelectorAll(".five-zone");
+  const taps = [null, null];
+  let startTime = null;
+  let finished = false;
+
+  setTimeout(() => {
+    statusEl.textContent = "Tippe bei genau 5 Sekunden! (kein Timer zu sehen)";
+    startTime = Date.now();
+    zones.forEach(z => { z.disabled = false; });
+  }, 1200);
+
+  const safetyTimer = setTimeout(finish, 1200 + 15000);
+
+  zones.forEach((zone, index) => {
+    zone.addEventListener("click", () => {
+      if (finished || taps[index] !== null || startTime === null) return;
+      taps[index] = Date.now() - startTime;
+      zone.textContent = `${players[index]} ✓`;
+      zone.disabled = true;
+      if (taps[0] !== null && taps[1] !== null) {
+        finish();
+      }
+    });
+  });
+
+  function finish() {
+    if (finished) return;
+    finished = true;
+    clearTimeout(safetyTimer);
+    zones.forEach(z => { z.disabled = true; });
+
+    if (taps[0] === null && taps[1] === null) {
+      statusEl.textContent = "Keiner hat getippt! Unentschieden 🤝";
+      nextBtn.classList.remove("hidden");
+      return;
+    }
+
+    const label = index => (taps[index] === null ? "–" : `${(taps[index] / 1000).toFixed(2)}s`);
+    const diffs = taps.map(t => (t === null ? Infinity : Math.abs(t - 5000)));
+
+    if (diffs[0] === diffs[1]) {
+      statusEl.textContent = `${players[0]}: ${label(0)} · ${players[1]}: ${label(1)} – Unentschieden! 🤝`;
+    } else {
+      const winner = diffs[0] < diffs[1] ? 0 : 1;
+      zones[winner].classList.add("winner");
+      statusEl.textContent = `${players[0]}: ${label(0)} · ${players[1]}: ${label(1)} – ${players[winner]} gewinnt! 🏆`;
+    }
+    nextBtn.classList.remove("hidden");
+  }
+}
+
+function renderHotPotato() {
+  challengeCard.innerHTML = `
+    <p class="challenge-status" id="potato-status">Gebt das Handy jetzt reihum weiter! 🔥</p>
+    <div class="potato" id="potato">🥔</div>
+  `;
+
+  const statusEl = document.getElementById("potato-status");
+  const potatoEl = document.getElementById("potato");
+
+  const totalTime = 5000 + Math.random() * 15000;
+
+  setTimeout(() => {
+    potatoEl.classList.add("pulsing");
+  }, totalTime * (2 / 3));
+
+  setTimeout(() => {
+    potatoEl.classList.remove("pulsing");
+    potatoEl.textContent = "💥";
+    potatoEl.classList.add("exploded");
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100, 50, 200]);
+    }
+    statusEl.textContent = "Verloren!";
+    statusEl.classList.add("status-lost");
+    nextBtn.classList.remove("hidden");
+  }, totalTime);
 }
