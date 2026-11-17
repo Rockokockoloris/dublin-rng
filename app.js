@@ -115,7 +115,7 @@ function renderStep() {
     revealCard.classList.add("hidden");
     challengeCard.classList.remove("hidden");
     nextBtn.classList.add("hidden");
-    renderChallenge(step);
+    renderChallengeIntro(step);
     return;
   }
 
@@ -133,6 +133,39 @@ function renderStep() {
   nextBtn.textContent = stepIndex === steps.length - 1 ? "Fertig – Übersicht anzeigen" : "Weiter";
 }
 
+const GAME_NAMES = {
+  reaction: "🐾 Reaktionsduell",
+  tictactoe: "🐾 Tic-Tac-Toe"
+};
+
+function renderChallengeIntro(step) {
+  challengeCard.classList.add("intro-mode");
+  challengeCard.innerHTML = `
+    <div class="challenge-intro">
+      <div class="intro-dog">
+        🐶
+        <span class="sound-wave sw1"></span>
+        <span class="sound-wave sw2"></span>
+        <span class="sound-wave sw3"></span>
+      </div>
+      <div class="intro-bark">WUFF!</div>
+      <div class="intro-title">CHALLENGE!</div>
+      <div class="intro-game-name">${GAME_NAMES[step.game]}</div>
+      <div class="intro-players">${step.players.join(" 🆚 ")}</div>
+      <div class="intro-hint">Antippen zum Start</div>
+    </div>
+  `;
+
+  if (navigator.vibrate) {
+    navigator.vibrate([80, 40, 80]);
+  }
+
+  challengeCard.addEventListener("click", () => {
+    challengeCard.classList.remove("intro-mode");
+    renderChallenge(step);
+  }, { once: true });
+}
+
 function renderChallenge(step) {
   if (step.game === "reaction") {
     renderReactionGame(step.players);
@@ -143,7 +176,6 @@ function renderChallenge(step) {
 
 function renderReactionGame(players) {
   challengeCard.innerHTML = `
-    <div class="label">🐾 Reaktionsduell</div>
     <p class="challenge-status" id="reaction-status">Bereit machen …</p>
     <div class="reaction-zones">
       <button type="button" class="reaction-zone" data-index="0">${players[0]}</button>
@@ -197,7 +229,6 @@ function renderTicTacToe(players) {
   ];
 
   challengeCard.innerHTML = `
-    <div class="label">🐾 Tic-Tac-Toe</div>
     <p class="challenge-status" id="ttt-status">${players[0]} (❌) ist dran</p>
     <div class="ttt-board">
       ${board.map((_, i) => `<button type="button" class="ttt-cell" data-index="${i}"></button>`).join("")}
