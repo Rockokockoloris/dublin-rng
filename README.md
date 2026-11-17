@@ -1,5 +1,7 @@
 # Stammtisch-Team-Auslosung
 
+🔗 **Live:** https://rockokockoloris.github.io/dublin-rng/
+
 Statische Website zum Auslosen von Stammtisch-Teams: 15 Namen eingeben, es werden 6 Zweier-Teams (je ein Zweimonats-Zeitraum) und 1 Dreier-Team (organisiert die Jahresfahrt) gewürfelt. Die Teams werden einzeln nacheinander per "Weiter"-Klick aufgedeckt, am Ende steht eine Gesamtübersicht.
 
 ## Lokal testen

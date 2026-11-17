@@ -55,8 +55,8 @@ h1 {
   font-size: 0.9rem;
 }
 
-.screen.hidden {
-  display: none;
+.hidden {
+  display: none !important;
 }
 
 #summary h2 {
@@ -168,6 +168,38 @@ h1 {
   gap: 0.5rem;
 }
 
+/* Challenges brauchen Platz zum Spielen: die Reveal-Section bricht dafür aus
+   dem .app-Container aus und füllt den kompletten Bildschirm. */
+#reveal.challenge-active {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-width: none;
+  margin: 0;
+  padding: 1.25rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+}
+
+#reveal.challenge-active .progress {
+  flex-shrink: 0;
+  margin-bottom: 0.75rem;
+}
+
+#reveal.challenge-active #challenge-card {
+  flex: 1;
+  min-height: 0;
+  margin: 0 0 1rem;
+}
+
+#reveal.challenge-active #next-btn {
+  flex-shrink: 0;
+}
+
 .card .label {
   font-size: 0.9rem;
   text-transform: uppercase;
@@ -184,6 +216,70 @@ h1 {
 
 .card .detail {
   color: #555;
+}
+
+.challenge-status {
+  font-weight: 600;
+  margin: 0.25rem 0 0.5rem;
+}
+
+.reaction-zones {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.reaction-zone {
+  flex: 1;
+  min-height: 100px;
+  border-radius: 16px;
+  border: 3px solid var(--door-blue);
+  background: white;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.4rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.reaction-zone.go {
+  background: var(--door-green);
+  color: var(--guinness-cream);
+  border-color: var(--door-green);
+}
+
+.reaction-zone.winner {
+  background: var(--door-yellow);
+  border-color: var(--door-yellow);
+}
+
+.reaction-zone:active {
+  transform: scale(0.97);
+}
+
+.ttt-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 360px;
+  margin: 0.5rem auto 0;
+}
+
+.ttt-cell {
+  aspect-ratio: 1 / 1;
+  font-size: 2.4rem;
+  border: 2px solid var(--door-blue);
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ttt-cell.filled {
+  cursor: default;
 }
 
 .summary-list {
