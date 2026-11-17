@@ -11,6 +11,8 @@ const modeChallengesBtn = document.getElementById("mode-challenges-btn");
 
 const nameCardsEl = document.getElementById("name-cards");
 const presentCountEl = document.getElementById("present-count");
+const trioExcludeSection = document.getElementById("trio-exclude-section");
+const trioExcludeCardsEl = document.getElementById("trio-exclude-cards");
 const drawBtn = document.getElementById("draw-btn");
 
 const progressEl = document.querySelector(".progress");
@@ -27,6 +29,7 @@ let appMode = "auslosung";
 let steps = [];
 let stepIndex = 0;
 const presentNames = new Set();
+const unavailableForTrip = new Set();
 
 function shuffle(array) {
   const result = array.slice();
@@ -63,20 +66,48 @@ nameCardsEl.addEventListener("click", (event) => {
   updatePresentCount();
 });
 
+function renderTrioExcludeCards() {
+  trioExcludeCardsEl.innerHTML = PRESET_NAMES.map(name => `
+    <button type="button" class="name-card exclude-card" data-name="${name}" aria-pressed="false">${name}</button>
+  `).join("");
+}
+
+trioExcludeCardsEl.addEventListener("click", (event) => {
+  const card = event.target.closest(".exclude-card");
+  if (!card) return;
+  const name = card.dataset.name;
+  const isExcluded = unavailableForTrip.has(name);
+  if (isExcluded) {
+    unavailableForTrip.delete(name);
+  } else {
+    unavailableForTrip.add(name);
+  }
+  card.classList.toggle("excluded", !isExcluded);
+  card.setAttribute("aria-pressed", String(!isExcluded));
+});
+
 modeAuslosungBtn.addEventListener("click", () => {
   appMode = "auslosung";
   drawBtn.textContent = "Teams auslosen";
+  trioExcludeSection.classList.remove("hidden");
   showScreen(setupScreen);
 });
 
 modeChallengesBtn.addEventListener("click", () => {
   appMode = "challenges";
   drawBtn.textContent = "Challenge starten";
+  trioExcludeSection.classList.add("hidden");
   showScreen(setupScreen);
 });
 
 function buildSteps(names) {
-  const shuffled = shuffle(names);
+  let eligibleForTrio = names.filter(n => !unavailableForTrip.has(n));
+  if (eligibleForTrio.length < 3) {
+    eligibleForTrio = names;
+  }
+  const trioMembers = shuffle(eligibleForTrio).slice(0, 3);
+  const shuffled = shuffle(names.filter(n => !trioMembers.includes(n)));
+
   const teamSteps = [];
   for (let i = 0; i < 6; i++) {
     teamSteps.push({
@@ -88,7 +119,7 @@ function buildSteps(names) {
   }
   teamSteps.push({
     type: "trio",
-    members: [shuffled[12], shuffled[13], shuffled[14]],
+    members: trioMembers,
     detail: "Organisiert die Stammtischfahrt im nächsten Jahr",
     teamNumber: 7
   });
@@ -211,8 +242,11 @@ endChallengesBtn.addEventListener("click", () => {
 
 restartBtn.addEventListener("click", () => {
   presentNames.clear();
+  unavailableForTrip.clear();
   renderNameCards();
+  renderTrioExcludeCards();
   showScreen(welcomeScreen);
 });
 
 renderNameCards();
+renderTrioExcludeCards();

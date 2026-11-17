@@ -88,6 +88,10 @@ h1 {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.7);
 }
 
+#welcome .hint {
+  text-align: center;
+}
+
 .name-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -121,6 +125,20 @@ h1 {
 
 .name-card.selected::after {
   content: " ✓";
+}
+
+.name-card.excluded {
+  background: var(--door-red);
+  border-color: var(--door-red);
+  color: var(--guinness-cream);
+}
+
+.name-card.excluded::after {
+  content: " 🚫";
+}
+
+#trio-exclude-section {
+  margin-top: 1rem;
 }
 
 .present-count {
@@ -257,6 +275,13 @@ h1 {
   margin: 0.25rem 0 0.75rem;
   color: var(--guinness-cream);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 8px rgba(0, 0, 0, 0.7);
+}
+
+.active-player {
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--door-yellow);
 }
 
 #challenge-card.intro-mode {
@@ -458,6 +483,84 @@ h1 {
   0% { transform: scale(1); opacity: 1; }
   40% { transform: scale(1.5); opacity: 1; }
   100% { transform: scale(2.6); opacity: 0; }
+}
+
+.steady-track {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  touch-action: none;
+}
+
+.steady-tube {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 56;
+  stroke-linecap: round;
+}
+
+.steady-guide {
+  fill: none;
+  stroke: var(--guinness-cream);
+  stroke-width: 3;
+  stroke-dasharray: 8 8;
+  opacity: 0.7;
+}
+
+.steady-node {
+  fill: var(--door-green);
+}
+
+.steady-end {
+  fill: var(--door-yellow);
+}
+
+#steady-svg.fail .steady-tube {
+  stroke: var(--door-red);
+}
+
+#steady-svg.success .steady-tube,
+#steady-svg.active .steady-tube {
+  stroke: var(--door-green);
+}
+
+.steady-label {
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--guinness-cream);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.memory-board {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.memory-card {
+  background: var(--door-blue);
+  border: none;
+  border-radius: 10px;
+  font-size: 1.7rem;
+  color: white;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.memory-card.revealed,
+.memory-card.matched {
+  background: white;
+  color: var(--guinness-black);
+}
+
+.memory-card.matched {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .ttt-board {

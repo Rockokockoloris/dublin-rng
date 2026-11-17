@@ -1,11 +1,13 @@
-const CHALLENGE_GAMES = ["reaction", "tictactoe", "tapsprint", "perfectfive", "hotpotato"];
+const CHALLENGE_GAMES = ["reaction", "tictactoe", "tapsprint", "perfectfive", "hotpotato", "steadyhand", "memory"];
 
 const GAME_NAMES = {
   reaction: "🐾 Reaktionsduell",
   tictactoe: "🐾 Tic-Tac-Toe",
   tapsprint: "🐾 Tap-Sprint",
   perfectfive: "🐾 Perfekte 5 Sekunden",
-  hotpotato: "🐾 Hot Potato"
+  hotpotato: "🐾 Hot Potato",
+  steadyhand: "🐾 Steady Hand",
+  memory: "🐾 Memory-Duell"
 };
 
 function pickChallengePlayers() {
@@ -82,7 +84,9 @@ function renderChallenge(step) {
     tictactoe: renderTicTacToe,
     tapsprint: renderTapSprint,
     perfectfive: renderPerfectFive,
-    hotpotato: renderHotPotato
+    hotpotato: renderHotPotato,
+    steadyhand: renderSteadyHand,
+    memory: renderMemoryDuell
   };
   renderers[step.game](step.players);
 }
@@ -142,7 +146,7 @@ function renderTicTacToe(players) {
   ];
 
   challengeCard.innerHTML = `
-    <p class="challenge-status" id="ttt-status">${players[0]} (❌) ist dran</p>
+    <p class="challenge-status" id="ttt-status"><span class="active-player">${players[0]}</span> (❌) ist dran</p>
     <div class="ttt-board">
       ${board.map((_, i) => `<button type="button" class="ttt-cell" data-index="${i}"></button>`).join("")}
     </div>
@@ -181,7 +185,7 @@ function renderTicTacToe(players) {
         return;
       }
       currentPlayer = 1 - currentPlayer;
-      statusEl.textContent = `${players[currentPlayer]} (${marks[currentPlayer]}) ist dran`;
+      statusEl.innerHTML = `<span class="active-player">${players[currentPlayer]}</span> (${marks[currentPlayer]}) ist dran`;
     });
   });
 }
@@ -350,4 +354,201 @@ function renderHotPotato() {
     statusEl.classList.add("status-lost");
     revealNextButton();
   }, totalTime);
+}
+
+function renderSteadyHand(players) {
+  const PATH_D = "M 150,30 C 40,110 260,170 150,250 C 40,330 260,390 150,470";
+
+  challengeCard.innerHTML = `
+    <p class="challenge-status" id="steady-status"></p>
+    <svg id="steady-svg" class="steady-track" viewBox="0 0 300 500" preserveAspectRatio="xMidYMid meet">
+      <path d="${PATH_D}" class="steady-tube"></path>
+      <path d="${PATH_D}" class="steady-guide"></path>
+      <circle cx="150" cy="30" r="24" class="steady-node steady-start"></circle>
+      <text x="150" y="35" class="steady-label">START</text>
+      <circle cx="150" cy="470" r="24" class="steady-node steady-end"></circle>
+      <text x="150" y="475" class="steady-label">ZIEL</text>
+    </svg>
+  `;
+
+  const statusEl = document.getElementById("steady-status");
+  const svg = document.getElementById("steady-svg");
+  const pathEl = svg.querySelector(".steady-tube");
+  const pathLength = pathEl.getTotalLength();
+  const TOLERANCE = 34;
+
+  const samplePoints = [];
+  const SAMPLES = 120;
+  for (let i = 0; i <= SAMPLES; i++) {
+    samplePoints.push(pathEl.getPointAtLength((i / SAMPLES) * pathLength));
+  }
+
+  function distanceToPath(x, y) {
+    let min = Infinity;
+    for (const p of samplePoints) {
+      const d = Math.hypot(p.x - x, p.y - y);
+      if (d < min) min = d;
+    }
+    return min;
+  }
+
+  function toSvgPoint(evt) {
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX;
+    pt.y = evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  const results = [null, null];
+  let currentPlayer = 0;
+  let tracing = false;
+  let startTime = 0;
+
+  function startTurn() {
+    svg.classList.remove("fail", "success", "active");
+    tracing = false;
+    statusEl.innerHTML = `<span class="active-player">${players[currentPlayer]}</span> ist dran – Finger auf START, dann der Spur bis ZIEL folgen`;
+  }
+
+  svg.addEventListener("pointerdown", (evt) => {
+    if (svg.classList.contains("fail") || svg.classList.contains("success")) return;
+    const p = toSvgPoint(evt);
+    if (Math.hypot(p.x - 150, p.y - 30) < 30) {
+      tracing = true;
+      startTime = performance.now();
+      svg.classList.add("active");
+      try {
+        svg.setPointerCapture(evt.pointerId);
+      } catch (e) {
+        // ignore – capture is a nice-to-have, tracing already works via pointermove
+      }
+    }
+  });
+
+  svg.addEventListener("pointermove", (evt) => {
+    if (!tracing) return;
+    const p = toSvgPoint(evt);
+
+    if (Math.hypot(p.x - 150, p.y - 470) < 30) {
+      finishTurn(performance.now() - startTime, true);
+      return;
+    }
+
+    if (distanceToPath(p.x, p.y) > TOLERANCE) {
+      finishTurn(null, false);
+    }
+  });
+
+  function finishTurn(time, success) {
+    if (!tracing) return;
+    tracing = false;
+    svg.classList.remove("active");
+    results[currentPlayer] = time;
+    svg.classList.add(success ? "success" : "fail");
+    statusEl.innerHTML = success
+      ? `<span class="active-player">${players[currentPlayer]}</span> geschafft! (${(time / 1000).toFixed(2)}s)`
+      : `<span class="active-player">${players[currentPlayer]}</span> daneben!`;
+
+    setTimeout(() => {
+      if (currentPlayer === 0) {
+        currentPlayer = 1;
+        startTurn();
+      } else {
+        showResult();
+      }
+    }, 1400);
+  }
+
+  function showResult() {
+    svg.classList.add("hidden");
+    if (results[0] === null && results[1] === null) {
+      statusEl.textContent = "Beide daneben – Unentschieden! 🤝";
+    } else if (results[0] === null) {
+      statusEl.textContent = `${players[1]} gewinnt! 🏆`;
+    } else if (results[1] === null) {
+      statusEl.textContent = `${players[0]} gewinnt! 🏆`;
+    } else {
+      const winner = results[0] <= results[1] ? 0 : 1;
+      statusEl.textContent = `${players[0]}: ${(results[0] / 1000).toFixed(2)}s · ${players[1]}: ${(results[1] / 1000).toFixed(2)}s – ${players[winner]} gewinnt! 🏆`;
+    }
+    revealNextButton();
+  }
+
+  startTurn();
+}
+
+function renderMemoryDuell(players) {
+  const SYMBOLS = ["🐶", "🍺", "🎲", "🍀", "🥔", "🦴"];
+  const cards = shuffle([...SYMBOLS, ...SYMBOLS]);
+
+  challengeCard.innerHTML = `
+    <p class="challenge-status" id="memory-status"><span class="active-player">${players[0]}</span> ist dran (0:0)</p>
+    <div class="memory-board">
+      ${cards.map(() => `<button type="button" class="memory-card">🐾</button>`).join("")}
+    </div>
+  `;
+
+  const statusEl = document.getElementById("memory-status");
+  const cardEls = challengeCard.querySelectorAll(".memory-card");
+  const scores = [0, 0];
+  let currentPlayer = 0;
+  let firstPick = null;
+  let lockBoard = false;
+  let matchedCount = 0;
+
+  function reveal(cardEl, index) {
+    cardEl.textContent = cards[index];
+    cardEl.classList.add("revealed");
+  }
+
+  function finish() {
+    if (scores[0] === scores[1]) {
+      statusEl.textContent = `Unentschieden! ${scores[0]}:${scores[1]} 🤝`;
+    } else {
+      const winner = scores[0] > scores[1] ? 0 : 1;
+      statusEl.textContent = `${players[winner]} gewinnt! ${scores[0]}:${scores[1]} 🏆`;
+    }
+    revealNextButton();
+  }
+
+  cardEls.forEach((cardEl, index) => {
+    cardEl.addEventListener("click", () => {
+      if (lockBoard || cardEl.classList.contains("revealed") || cardEl.classList.contains("matched")) return;
+      reveal(cardEl, index);
+
+      if (firstPick === null) {
+        firstPick = index;
+        return;
+      }
+
+      const secondPick = index;
+      lockBoard = true;
+
+      if (cards[firstPick] === cards[secondPick]) {
+        matchedCount += 2;
+        scores[currentPlayer]++;
+        cardEl.classList.add("matched");
+        cardEls[firstPick].classList.add("matched");
+        firstPick = null;
+        lockBoard = false;
+
+        if (matchedCount === cards.length) {
+          finish();
+          return;
+        }
+        statusEl.innerHTML = `<span class="active-player">${players[currentPlayer]}</span> ist dran (${scores[0]}:${scores[1]}) – Treffer, nochmal!`;
+      } else {
+        setTimeout(() => {
+          cardEl.classList.remove("revealed");
+          cardEl.textContent = "🐾";
+          cardEls[firstPick].classList.remove("revealed");
+          cardEls[firstPick].textContent = "🐾";
+          firstPick = null;
+          lockBoard = false;
+          currentPlayer = 1 - currentPlayer;
+          statusEl.innerHTML = `<span class="active-player">${players[currentPlayer]}</span> ist dran (${scores[0]}:${scores[1]})`;
+        }, 800);
+      }
+    });
+  });
 }
