@@ -1,4 +1,4 @@
-const CACHE_NAME = "hundis-v1";
+const CACHE_NAME = "hundis-v2";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -29,18 +29,17 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
+  // Network-first: online gibt's immer den aktuellen Stand, offline (oder bei
+  // Netzfehler) fällt die Anfrage auf den zuletzt gecachten Stand zurück.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((response) => {
-          if (response && (response.ok || response.type === "opaque")) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response && (response.ok || response.type === "opaque")) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

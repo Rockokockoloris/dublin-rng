@@ -16,35 +16,28 @@ function pickChallengePlayers() {
   return [pool[0], pool[1]];
 }
 
-let challengeWeights = {};
-resetChallengeWeights();
+// Shuffle-Bag: alle Challenge-Typen werden einmal gemischt und der Reihe nach
+// verbraucht, bevor neu gemischt wird. So sind innerhalb eines Durchlaufs
+// (max. 6 Challenges bei der Auslosung) garantiert keine Wiederholungen möglich,
+// statt sie nur unwahrscheinlicher zu machen.
+let challengeBag = [];
+let lastPlayedGame = null;
 
 function resetChallengeWeights() {
-  challengeWeights = {};
-  CHALLENGE_GAMES.forEach(g => {
-    challengeWeights[g] = 1;
-  });
+  challengeBag = [];
+  lastPlayedGame = null;
 }
 
 function pickWeightedGame() {
-  const totalWeight = CHALLENGE_GAMES.reduce((sum, g) => sum + challengeWeights[g], 0);
-  let r = Math.random() * totalWeight;
-  let chosen = CHALLENGE_GAMES[CHALLENGE_GAMES.length - 1];
-  for (const g of CHALLENGE_GAMES) {
-    r -= challengeWeights[g];
-    if (r <= 0) {
-      chosen = g;
-      break;
+  if (challengeBag.length === 0) {
+    challengeBag = shuffle(CHALLENGE_GAMES);
+    if (challengeBag.length > 1 && challengeBag[0] === lastPlayedGame) {
+      const swapIndex = 1 + Math.floor(Math.random() * (challengeBag.length - 1));
+      [challengeBag[0], challengeBag[swapIndex]] = [challengeBag[swapIndex], challengeBag[0]];
     }
   }
-
-  CHALLENGE_GAMES.forEach(g => {
-    challengeWeights[g] = g === chosen
-      ? challengeWeights[g] * 0.25
-      : challengeWeights[g] + (1 - challengeWeights[g]) * 0.5;
-  });
-
-  return chosen;
+  lastPlayedGame = challengeBag.shift();
+  return lastPlayedGame;
 }
 
 function renderChallengeIntro(step) {
