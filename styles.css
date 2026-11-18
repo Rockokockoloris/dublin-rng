@@ -290,6 +290,45 @@ h1 {
   color: #555;
 }
 
+.card.reveal-in {
+  animation: card-pop-in 0.75s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+
+.card.reveal-in .label {
+  animation: reveal-fade-up 0.4s ease-out both;
+  animation-delay: 0.05s;
+}
+
+.card.reveal-in .members {
+  animation: members-pop 0.7s cubic-bezier(.34, 1.56, .64, 1) both;
+  animation-delay: 0.25s;
+}
+
+.card.reveal-in .detail {
+  animation: reveal-fade-up 0.4s ease-out both;
+  animation-delay: 0.65s;
+}
+
+@keyframes card-pop-in {
+  0% { transform: scale(0.4) rotate(-10deg); opacity: 0; box-shadow: 0 0 0 rgba(212, 160, 23, 0); }
+  35% { transform: scale(1.18) rotate(5deg); opacity: 1; box-shadow: 0 0 50px 14px rgba(212, 160, 23, 0.6); }
+  55% { transform: scale(0.92) rotate(-3deg); box-shadow: 0 0 30px 8px rgba(212, 160, 23, 0.4); }
+  75% { transform: scale(1.06) rotate(2deg); box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
+  100% { transform: scale(1) rotate(0); opacity: 1; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+}
+
+@keyframes reveal-fade-up {
+  0% { opacity: 0; transform: translateY(14px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes members-pop {
+  0% { opacity: 0; transform: scale(0.15) rotate(-8deg); }
+  45% { opacity: 1; transform: scale(1.45) rotate(4deg); color: var(--door-yellow); text-shadow: 0 0 16px rgba(212, 160, 23, 0.9); }
+  70% { transform: scale(0.88) rotate(-2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); color: var(--guinness-black); text-shadow: none; }
+}
+
 .challenge-status {
   font-weight: 600;
   margin: 0.25rem 0 0.75rem;

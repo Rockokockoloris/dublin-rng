@@ -323,11 +323,19 @@ function renderStep() {
   challengeCard.classList.add("hidden");
   revealCard.classList.remove("hidden");
   nextBtn.classList.remove("hidden");
+
+  revealCard.classList.remove("reveal-in");
   revealCard.innerHTML = `
     <div class="label">${step.type === "trio" ? "🐕 Dreier-Team" : "🐾 Zweier-Team"}</div>
     <div class="members">${step.members.join(" & ")}</div>
     <div class="detail">${step.detail}</div>
   `;
+  void revealCard.offsetWidth;
+  revealCard.classList.add("reveal-in");
+  if (navigator.vibrate) {
+    navigator.vibrate([30, 40, 30, 40, 80]);
+  }
+
   nextBtn.textContent = stepIndex === steps.length - 1 ? "Fertig – Übersicht anzeigen" : "Weiter";
 }
 
