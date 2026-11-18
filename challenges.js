@@ -1,4 +1,4 @@
-const CHALLENGE_GAMES = ["reaction", "tictactoe", "tapsprint", "perfectfive", "hotpotato", "steadyhand", "memory"];
+const CHALLENGE_GAMES = ["reaction", "tictactoe", "tapsprint", "perfectfive", "hotpotato", "steadyhand", "memory", "airhockey"];
 
 const GAME_NAMES = {
   reaction: "🐾 Reaktionsduell",
@@ -7,7 +7,8 @@ const GAME_NAMES = {
   perfectfive: "🐾 Perfekte 5 Sekunden",
   hotpotato: "🐾 Hot Potato",
   steadyhand: "🐾 Steady Hand",
-  memory: "🐾 Memory-Duell"
+  memory: "🐾 Memory-Duell",
+  airhockey: "🐾 Air Hockey"
 };
 
 function pickChallengePlayers() {
@@ -79,7 +80,8 @@ function renderChallenge(step) {
     perfectfive: renderPerfectFive,
     hotpotato: renderHotPotato,
     steadyhand: renderSteadyHand,
-    memory: renderMemoryDuell
+    memory: renderMemoryDuell,
+    airhockey: renderAirHockey
   };
   renderers[step.game](step.players);
 }
@@ -544,4 +546,179 @@ function renderMemoryDuell(players) {
       }
     });
   });
+}
+
+function renderAirHockey(players) {
+  const TABLE_W = 300;
+  const TABLE_H = 500;
+  const CENTER_Y = 250;
+  const WALL = 6;
+  const PUCK_R = 12;
+  const PADDLE_R = 22;
+  const GOAL_HALF_WIDTH = 50;
+
+  challengeCard.innerHTML = `
+    <p class="challenge-status" id="hockey-status">
+      <span class="active-player">${players[0]}</span> (oben) 🆚 <span class="active-player">${players[1]}</span> (unten)
+    </p>
+    <svg id="hockey-svg" class="hockey-table" viewBox="0 0 ${TABLE_W} ${TABLE_H}" preserveAspectRatio="xMidYMid meet">
+      <rect x="0" y="0" width="${TABLE_W}" height="${TABLE_H}" class="hockey-rink"></rect>
+      <line x1="0" y1="${CENTER_Y}" x2="${TABLE_W}" y2="${CENTER_Y}" class="hockey-center-line"></line>
+      <line x1="${TABLE_W / 2 - GOAL_HALF_WIDTH}" y1="3" x2="${TABLE_W / 2 + GOAL_HALF_WIDTH}" y2="3" class="hockey-goal"></line>
+      <line x1="${TABLE_W / 2 - GOAL_HALF_WIDTH}" y1="${TABLE_H - 3}" x2="${TABLE_W / 2 + GOAL_HALF_WIDTH}" y2="${TABLE_H - 3}" class="hockey-goal"></line>
+      <circle id="hockey-paddle-0" cx="${TABLE_W / 2}" cy="${CENTER_Y - 160}" r="${PADDLE_R}" class="hockey-paddle hockey-paddle-0"></circle>
+      <circle id="hockey-paddle-1" cx="${TABLE_W / 2}" cy="${CENTER_Y + 160}" r="${PADDLE_R}" class="hockey-paddle hockey-paddle-1"></circle>
+      <circle id="hockey-puck" cx="${TABLE_W / 2}" cy="${CENTER_Y}" r="${PUCK_R}" class="hockey-puck"></circle>
+    </svg>
+  `;
+
+  const statusEl = document.getElementById("hockey-status");
+  const svg = document.getElementById("hockey-svg");
+  const puckEl = document.getElementById("hockey-puck");
+  const paddleEls = [document.getElementById("hockey-paddle-0"), document.getElementById("hockey-paddle-1")];
+
+  const paddles = [
+    { x: TABLE_W / 2, y: CENTER_Y - 160 },
+    { x: TABLE_W / 2, y: CENTER_Y + 160 }
+  ];
+  const puck = { x: TABLE_W / 2, y: CENTER_Y, vx: 0, vy: 0 };
+
+  let finished = false;
+  const activePointers = new Map();
+
+  function toSvgPoint(evt) {
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX;
+    pt.y = evt.clientY;
+    return pt.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  function clampPaddle(index, x, y) {
+    const minY = index === 0 ? WALL + PADDLE_R : CENTER_Y + PADDLE_R;
+    const maxY = index === 0 ? CENTER_Y - PADDLE_R : TABLE_H - WALL - PADDLE_R;
+    return {
+      x: Math.max(WALL + PADDLE_R, Math.min(TABLE_W - WALL - PADDLE_R, x)),
+      y: Math.max(minY, Math.min(maxY, y))
+    };
+  }
+
+  function movePaddle(index, x, y) {
+    const clamped = clampPaddle(index, x, y);
+    paddles[index].x = clamped.x;
+    paddles[index].y = clamped.y;
+    paddleEls[index].setAttribute("cx", clamped.x);
+    paddleEls[index].setAttribute("cy", clamped.y);
+  }
+
+  svg.addEventListener("pointerdown", (evt) => {
+    if (finished) return;
+    const p = toSvgPoint(evt);
+    const paddleIndex = p.y < CENTER_Y ? 0 : 1;
+    activePointers.set(evt.pointerId, paddleIndex);
+    try {
+      svg.setPointerCapture(evt.pointerId);
+    } catch (e) {
+      // ignore – Steuerung funktioniert auch ohne Capture über pointermove weiter
+    }
+    movePaddle(paddleIndex, p.x, p.y);
+  });
+
+  svg.addEventListener("pointermove", (evt) => {
+    if (finished || !activePointers.has(evt.pointerId)) return;
+    const p = toSvgPoint(evt);
+    movePaddle(activePointers.get(evt.pointerId), p.x, p.y);
+  });
+
+  function releasePointer(evt) {
+    activePointers.delete(evt.pointerId);
+  }
+  svg.addEventListener("pointerup", releasePointer);
+  svg.addEventListener("pointercancel", releasePointer);
+
+  function scoreGoal(winnerIndex) {
+    finished = true;
+    if (navigator.vibrate) {
+      navigator.vibrate([60, 40, 60, 40, 150]);
+    }
+    statusEl.innerHTML = `🥅 Tor! <span class="active-player">${players[winnerIndex]}</span> gewinnt! 🏆`;
+    revealNextButton();
+  }
+
+  function step() {
+    if (finished) return;
+
+    puck.x += puck.vx;
+    puck.y += puck.vy;
+
+    if (puck.x - PUCK_R < WALL) {
+      puck.x = WALL + PUCK_R;
+      puck.vx *= -1;
+    } else if (puck.x + PUCK_R > TABLE_W - WALL) {
+      puck.x = TABLE_W - WALL - PUCK_R;
+      puck.vx *= -1;
+    }
+
+    const inGoalRange = Math.abs(puck.x - TABLE_W / 2) < GOAL_HALF_WIDTH - PUCK_R;
+    if (puck.y - PUCK_R < WALL) {
+      if (inGoalRange) {
+        scoreGoal(1);
+        return;
+      }
+      puck.y = WALL + PUCK_R;
+      puck.vy *= -1;
+    } else if (puck.y + PUCK_R > TABLE_H - WALL) {
+      if (inGoalRange) {
+        scoreGoal(0);
+        return;
+      }
+      puck.y = TABLE_H - WALL - PUCK_R;
+      puck.vy *= -1;
+    }
+
+    paddles.forEach((paddle) => {
+      const dx = puck.x - paddle.x;
+      const dy = puck.y - paddle.y;
+      const dist = Math.hypot(dx, dy);
+      const minDist = PUCK_R + PADDLE_R;
+      if (dist < minDist && dist > 0) {
+        const nx = dx / dist;
+        const ny = dy / dist;
+        puck.x = paddle.x + nx * minDist;
+        puck.y = paddle.y + ny * minDist;
+        const speed = Math.max(Math.hypot(puck.vx, puck.vy), 3.5);
+        puck.vx = nx * speed * 1.15;
+        puck.vy = ny * speed * 1.15;
+      }
+    });
+
+    const currentSpeed = Math.hypot(puck.vx, puck.vy);
+    const MAX_SPEED = 9;
+    const MIN_SPEED = 2.2;
+    if (currentSpeed > MAX_SPEED) {
+      puck.vx = (puck.vx / currentSpeed) * MAX_SPEED;
+      puck.vy = (puck.vy / currentSpeed) * MAX_SPEED;
+    } else if (currentSpeed > 0 && currentSpeed < MIN_SPEED) {
+      puck.vx = (puck.vx / currentSpeed) * MIN_SPEED;
+      puck.vy = (puck.vy / currentSpeed) * MIN_SPEED;
+    }
+
+    puckEl.setAttribute("cx", puck.x);
+    puckEl.setAttribute("cy", puck.y);
+
+    requestAnimationFrame(step);
+  }
+
+  const countdownSteps = ["Bereit …", "3", "2", "1", "LOS!"];
+  let stepIdx = 0;
+  const countdownTimer = setInterval(() => {
+    statusEl.textContent = countdownSteps[stepIdx];
+    stepIdx++;
+    if (stepIdx >= countdownSteps.length) {
+      clearInterval(countdownTimer);
+      const angle = (0.15 + Math.random() * 0.7) * Math.PI;
+      puck.vx = Math.cos(angle) * 3 * (Math.random() < 0.5 ? 1 : -1);
+      puck.vy = (Math.random() < 0.5 ? 1 : -1) * (2.2 + Math.random() * 1.3);
+      requestAnimationFrame(step);
+    }
+  }, 600);
 }
